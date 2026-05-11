@@ -234,4 +234,4 @@ YouTube:
 https://youtube.com/@ScottiBYTE
 
 Discussion Community:  
-https://discussion.scottibyte.com
+https://chat.scottibyte.com
