@@ -62,13 +62,6 @@ services:
 
     env_file:
       - .env
-```
-
-Start the container:
-
-```bash
-docker compose up -d
-```
 
 ---
 
@@ -95,6 +88,14 @@ VERIFY_SSL=false
 | `PORT` | Web UI port |
 | `POLL_INTERVAL_MS` | Client refresh interval |
 | `VERIFY_SSL` | Verify SSL certificates (`true` or `false`) |
+
+---
+
+Start the container:
+
+```bash
+docker compose up -d
+```
 
 ---
 
