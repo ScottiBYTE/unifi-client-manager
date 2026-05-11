@@ -33,22 +33,42 @@ Designed for administrators who need significantly more visibility and cleanup c
 
 ---
 
-# Docker Deployment
+# Deployment Instructions
 
-## Quick Start
+Create a working directory:
 
 ```bash
-docker run -d \
-  --name unifi-client-manager \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  --env-file .env \
-  scottibyte/unifi-client-manager:latest
+mkdir unifi-client-manager
+cd unifi-client-manager
 ```
 
----
+Create the environment file:
 
-# Docker Compose
+```bash
+nano .env
+```
+
+Paste the following into the `.env` file:
+
+```env
+UNIFI_BASE_URL=https://192.168.1.1
+UNIFI_USERNAME=admin
+UNIFI_PASSWORD=password
+UNIFI_SITE=default
+PORT=3000
+POLL_INTERVAL_MS=15000
+VERIFY_SSL=false
+```
+
+Save the file.
+
+Create the Docker Compose file:
+
+```bash
+nano docker-compose.yml
+```
+
+Paste the following into `docker-compose.yml`:
 
 ```yaml
 services:
@@ -62,22 +82,47 @@ services:
 
     env_file:
       - .env
+```
+
+Save the file.
+
+Start the container:
+
+```bash
+docker compose up -d
+```
+
+Verify the container is running:
+
+```bash
+docker ps
+```
+
+View logs if needed:
+
+```bash
+docker logs -f unifi-client-manager
+```
+
+---
+
+# Accessing the Application
+
+Open your browser:
+
+```text
+http://YOUR_SERVER_IP:3000
+```
+
+Example:
+
+```text
+http://192.168.1.50:3000
+```
 
 ---
 
 # Environment Variables
-
-Create a `.env` file:
-
-```env
-UNIFI_BASE_URL=https://192.168.1.1
-UNIFI_USERNAME=admin
-UNIFI_PASSWORD=password
-UNIFI_SITE=default
-PORT=3000
-POLL_INTERVAL_MS=15000
-VERIFY_SSL=false
-```
 
 | Variable | Description |
 |---|---|
@@ -91,20 +136,27 @@ VERIFY_SSL=false
 
 ---
 
-Start the container:
+# Updating the Container
+
+Pull the latest image:
 
 ```bash
+docker pull scottibyte/unifi-client-manager:latest
+```
+
+Restart the container:
+
+```bash
+docker compose down
 docker compose up -d
 ```
 
 ---
 
-# Accessing the Application
+# Stopping the Container
 
-Open your browser:
-
-```text
-http://YOUR_SERVER_IP:3000
+```bash
+docker compose down
 ```
 
 ---
@@ -138,6 +190,14 @@ This utility provides a fast operational view specifically designed for cleanup,
 
 Credentials are supplied through Docker environment variables and are **not embedded into the container image**.
 
+For production deployments, consider:
+
+- reverse proxy authentication
+- Cloudflare Tunnel
+- VPN-only access
+- internal-only exposure
+- SSL termination
+
 ---
 
 # Recommended Reverse Proxy
@@ -170,8 +230,8 @@ MIT License
 
 ScottiBYTE Enterprise Consulting Services
 
-YouTube:
+YouTube:  
 https://youtube.com/@ScottiBYTE
 
-Discussion Community:
+Discussion Community:  
 https://discussion.scottibyte.com
