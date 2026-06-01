@@ -1,0 +1,1619 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>UniFi Client Reservation Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text);
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 20px 72px 20px 72px;
+    }
+
+    .toolbar,
+    .filters,
+    .meta-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .sub,
+    .muted { color: #94a3b8; }
+
+    .sub { margin-top: 6px; }
+
+    input,
+    select,
+    button {
+      background: #111827;
+      color: #fff;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    button { cursor: pointer; }
+
+    button:hover { border-color: #60a5fa; }
+
+    .help {
+      margin-bottom: 12px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    .summary-cards {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .summary-card {
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-width: 170px;
+    }
+
+    .summary-card .label {
+      color: #94a3b8;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .summary-card .value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .meta-bar { justify-content: space-between; }
+
+    .meta-left,
+    .meta-right {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .badge {
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .badge strong { color: #e5e7eb; }
+
+    .table-wrap {
+      border: 1px solid #374151;
+      border-radius: 12px;
+      overflow: auto;
+      max-height: 75vh;
+      background: #111827;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1450px;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #1f2937;
+      text-align: left;
+      vertical-align: top;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #1f2937;
+      cursor: pointer;
+      user-select: none;
+      z-index: 2;
+    }
+
+    tbody tr { cursor: pointer; }
+
+
+    tr.selected {
+      background: var(--selected) !important;
+      outline: 2px solid #3b82f6;
+      outline-offset: -2px;
+    }
+
+    .mono { font-family: monospace; }
+
+    .copyable { cursor: copy; }
+
+    .copyable:hover {
+      color: #60a5fa;
+      text-decoration: underline;
+    }
+
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .pill-red {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    .pill-amber {
+      background: #f59e0b;
+      color: #fff;
+    }
+
+    .pill-blue {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .status-online { color: #86efac; }
+
+    .status-offline { color: #fca5a5; }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      background: #1d4ed8;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      z-index: 9999;
+      font-size: 14px;
+    }
+
+
+
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --bg-gradient:
+        radial-gradient(circle at 8% 0%, rgba(37, 99, 235, 0.16), transparent 34rem),
+        radial-gradient(circle at 92% 0%, rgba(14, 165, 233, 0.10), transparent 32rem),
+        linear-gradient(180deg, #07111f 0%, #0b1220 50%, #0f172a 100%);
+      --panel: rgba(13, 22, 36, 0.96);
+      --panel-2: rgba(23, 34, 52, 0.98);
+      --panel-soft: rgba(15, 23, 42, 0.92);
+      --row-odd: rgba(11, 18, 32, 0.96);
+      --row-even: rgba(20, 31, 48, 0.96);
+      --text: #e5e7eb;
+      --muted: #a7b3c5;
+      --border: #334155;
+      --border-soft: rgba(71, 85, 105, 0.70);
+      --hover: rgba(37, 52, 78, 0.98);
+      --selected: rgba(30, 64, 175, 0.46);
+      --accent: #60a5fa;
+      --toast: #1d4ed8;
+      --shadow: rgba(0, 0, 0, 0.38);
+    }
+
+    body.theme-light {
+      color-scheme: light;
+      --bg: #c4cfdb;
+      --bg-gradient:
+        radial-gradient(circle at 8% 0%, rgba(37, 99, 235, 0.18), transparent 34rem),
+        radial-gradient(circle at 92% 0%, rgba(14, 165, 233, 0.16), transparent 32rem),
+        linear-gradient(180deg, #d4dee9 0%, #c7d2df 42%, #b9c6d4 100%);
+      --panel: rgba(226, 235, 244, 0.94);
+      --panel-2: rgba(196, 210, 225, 0.98);
+      --panel-soft: rgba(216, 226, 237, 0.96);
+      --row-odd: rgba(232, 238, 245, 0.96);
+      --row-even: rgba(207, 219, 232, 0.96);
+      --text: #0f172a;
+      --muted: #334155;
+      --border: #8fa2b8;
+      --border-soft: rgba(111, 128, 148, 0.62);
+      --hover: rgba(181, 205, 232, 0.98);
+      --selected: rgba(159, 199, 245, 0.98);
+      --accent: #2563eb;
+      --toast: #2563eb;
+      --shadow: rgba(15, 23, 42, 0.16);
+    }
+
+    body {
+      background: var(--bg);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text);
+    }
+
+    .wrap {
+      background: transparent;
+    }
+
+    .sub,
+    .muted,
+    .help,
+    .summary-card .label,
+    .badge {
+      color: var(--muted);
+    }
+
+    input,
+    select,
+    button,
+    .summary-card,
+    .badge,
+    .table-wrap,
+    .header-link {
+      background: var(--panel);
+      color: var(--text);
+      border-color: var(--border);
+      box-shadow: 0 10px 28px var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .summary-card {
+      background: var(--panel-soft);
+    }
+
+    .badge strong {
+      color: var(--text);
+    }
+
+    th {
+      background: var(--panel-2);
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: var(--row-odd);
+    }
+
+    tbody tr:nth-child(even) {
+      background: var(--row-even);
+    }
+
+    td {
+      border-bottom-color: var(--border-soft);
+    }
+
+    tbody tr:hover {
+      background: var(--hover);
+    }
+
+    tr.selected {
+      background: var(--selected) !important;
+      outline-color: var(--accent);
+    }
+
+    button:hover,
+    .copyable:hover,
+    .header-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .toast {
+      background: var(--toast);
+    }
+
+    .header-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .donate-link {
+      color: #f87171;
+      font-weight: 700;
+    }
+
+    body.theme-light .donate-link {
+      color: #dc2626;
+    }
+
+
+    .toolbar {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 72px;
+      padding-right: 0;
+    }
+
+    .toolbar > div:first-child {
+      flex: 1 1 auto;
+      min-width: 520px;
+      padding-right: 520px;
+    }
+
+    .toolbar .top-actions {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: flex-end;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    .meta-bar {
+      align-items: center;
+    }
+
+    .meta-right {
+      margin-left: auto;
+    }
+
+
+    .table-wrap {
+      border-width: 1px;
+    }
+
+    table {
+      background: transparent;
+    }
+
+    tbody tr {
+      transition: background 120ms ease, outline-color 120ms ease;
+    }
+
+    body.theme-light .status-online {
+      color: #15803d;
+      font-weight: 700;
+    }
+
+    body.theme-light .status-offline {
+      color: #dc2626;
+      font-weight: 700;
+    }
+
+    body.theme-dark .status-online,
+    .status-online {
+      font-weight: 700;
+    }
+
+    .summary-card .value {
+      color: var(--text);
+    }
+
+
+    .status-panel {
+      margin: 18px 0 16px 0;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--panel) 92%, transparent),
+        color-mix(in srgb, var(--panel-soft) 96%, transparent)
+      );
+      box-shadow: 0 14px 36px var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .status-header h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    .status-subtitle {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--panel-soft);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 14px rgba(34, 197, 94, 0.8);
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(170px, 1fr));
+      gap: 12px;
+      margin-bottom: 0;
+    }
+
+    .status-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+      min-height: 92px;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(135deg, rgba(96, 165, 250, 0.08), transparent 58%),
+        var(--panel-soft);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 20px var(--shadow);
+    }
+
+    .status-icon {
+      width: 48px;
+      height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--accent) 16%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+      font-size: 24px;
+    }
+
+    .status-card .label {
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .status-card .value {
+      font-size: 25px;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .status-good .status-icon {
+      background: rgba(34, 197, 94, 0.14);
+      border-color: rgba(34, 197, 94, 0.28);
+    }
+
+    .status-warn .status-icon {
+      background: rgba(148, 163, 184, 0.16);
+      border-color: rgba(148, 163, 184, 0.32);
+    }
+
+    .status-alert .status-icon {
+      background: rgba(245, 158, 11, 0.16);
+      border-color: rgba(245, 158, 11, 0.36);
+    }
+
+    .status-stale .status-icon {
+      background: rgba(239, 68, 68, 0.14);
+      border-color: rgba(239, 68, 68, 0.34);
+    }
+
+    body.theme-light .status-panel {
+      background:
+        linear-gradient(180deg, rgba(226, 235, 244, 0.96), rgba(207, 219, 232, 0.94));
+    }
+
+    body.theme-light .status-card {
+      background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.09), transparent 58%),
+        var(--panel-soft);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 8px 18px var(--shadow);
+    }
+
+    @media (max-width: 1300px) {
+      .status-grid {
+        grid-template-columns: repeat(3, minmax(170px, 1fr));
+      }
+    }
+
+    @media (max-width: 850px) {
+      .status-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+
+
+
+
+
+    /* Slightly larger instruction line */
+    .help {
+      font-size: 15px;
+      line-height: 1.45;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      margin-top: 10px;
+      margin-bottom: 16px;
+    }
+
+    .help strong,
+    .help kbd {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .help kbd {
+      display: inline-block;
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--panel-soft);
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+
+    /* Incus Backup-style final top-right controls */
+    .toolbar .top-actions {
+      gap: 12px;
+      align-items: center;
+    }
+
+    .toolbar .top-actions button,
+    .toolbar .top-actions .header-link {
+      appearance: none;
+      min-height: auto;
+      height: auto;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+      background: transparent;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .toolbar .top-actions #refreshBtn,
+    .toolbar .top-actions #exportBtn {
+      color: var(--text);
+      opacity: 0.92;
+      cursor: pointer;
+    }
+
+    .toolbar .top-actions #refreshBtn:hover,
+    .toolbar .top-actions #exportBtn:hover {
+      color: #93c5fd;
+      opacity: 1;
+      text-decoration: underline;
+      background: transparent;
+    }
+
+    .toolbar .top-actions .header-link {
+      color: #60a5fa;
+    }
+
+    .toolbar .top-actions .header-link:hover {
+      color: #93c5fd;
+      text-decoration: underline;
+      background: transparent;
+    }
+
+    .toolbar .top-actions .donate-link {
+      color: #fb7185;
+      font-weight: 800;
+    }
+
+    .toolbar .top-actions .donate-link:hover {
+      color: #fda4af;
+      text-decoration: underline;
+      background: transparent;
+    }
+
+    .toolbar .top-actions #themeToggleBtn {
+      padding: 7px 13px;
+      border-radius: 5px;
+      border: 1px solid rgba(147, 197, 253, 0.35);
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: none;
+    }
+
+    .toolbar .top-actions #themeToggleBtn:hover {
+      background: #1d4ed8;
+      color: #ffffff;
+      border-color: rgba(147, 197, 253, 0.65);
+      text-decoration: none;
+    }
+
+    body.theme-light .toolbar .top-actions #refreshBtn,
+    body.theme-light .toolbar .top-actions #exportBtn {
+      color: #0f172a;
+    }
+
+    body.theme-light .toolbar .top-actions #refreshBtn:hover,
+    body.theme-light .toolbar .top-actions #exportBtn:hover {
+      color: #1d4ed8;
+    }
+
+    body.theme-light .toolbar .top-actions .header-link {
+      color: #2563eb;
+    }
+
+    body.theme-light .toolbar .top-actions .header-link:hover {
+      color: #1d4ed8;
+    }
+
+    body.theme-light .toolbar .top-actions .donate-link {
+      color: #dc2626;
+    }
+
+    body.theme-light .toolbar .top-actions .donate-link:hover {
+      color: #b91c1c;
+    }
+
+    body.theme-light .toolbar .top-actions #themeToggleBtn {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+
+    /* Fine tune top-right control spacing */
+    .toolbar .top-actions {
+      top: 7px;
+      right: 0;
+      gap: 13px;
+    }
+
+    .toolbar .top-actions button,
+    .toolbar .top-actions .header-link {
+      font-size: 15px;
+      letter-spacing: 0.01em;
+    }
+
+    .toolbar .top-actions #themeToggleBtn {
+      padding: 7px 14px;
+      border-radius: 5px;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <div class="toolbar">
+      <div>
+        <h1>UniFi Client Reservation Manager</h1>
+        <div class="sub">ScottiBYTE Enterprise Consulting Services</div>
+      </div>
+
+      <div class="top-actions">
+        <button id="refreshBtn">Refresh</button>
+        <button id="exportBtn">Export Reservations CSV</button>
+
+        <a
+          id="githubVersionLink"
+          class="header-link"
+          href="https://github.com/ScottiBYTE/unifi-client-manager/releases/tag/v1.2.0"
+          target="_blank"
+          rel="noopener noreferrer"
+        >GitHub v1.2.0</a>
+
+        <a
+          id="donateLink"
+          class="header-link donate-link"
+          href="https://www.paypal.com/paypalme/ScottiBYTE"
+          target="_blank"
+          rel="noopener noreferrer"
+        >❤ Donate</a>
+
+        <button id="themeToggleBtn" type="button">☀ Light</button>
+      </div>
+    </div>
+
+    <div class="help">
+      Click <strong>Client Name</strong>, <strong>DNS Name</strong>, <strong>IP</strong>, or <strong>MAC</strong> to copy it.
+      Use <kbd>↑</kbd> / <kbd>↓</kbd> to move through rows.
+    </div>
+
+    <section class="status-panel">
+      <div class="status-header">
+        <div>
+          <h2>Status</h2>
+          <div class="status-subtitle">UniFi client reservation overview</div>
+        </div>
+
+        <div class="status-chip">
+          <span class="status-dot"></span>
+          Live Client Inventory
+        </div>
+      </div>
+
+      <div class="summary-cards status-grid">
+        <div class="summary-card status-card">
+          <div class="status-icon">👥</div>
+          <div>
+            <div class="label">Total Clients</div>
+            <div class="value" id="cardTotal">0</div>
+          </div>
+        </div>
+
+        <div class="summary-card status-card status-good">
+          <div class="status-icon">🟢</div>
+          <div>
+            <div class="label">Online</div>
+            <div class="value" id="cardOnline">0</div>
+          </div>
+        </div>
+
+        <div class="summary-card status-card status-warn">
+          <div class="status-icon">⚫</div>
+          <div>
+            <div class="label">Offline</div>
+            <div class="value" id="cardOffline">0</div>
+          </div>
+        </div>
+
+        <div class="summary-card status-card status-alert">
+          <div class="status-icon">📌</div>
+          <div>
+            <div class="label">Reserved but Offline</div>
+            <div class="value" id="cardReservedOffline">0</div>
+          </div>
+        </div>
+
+        <div class="summary-card status-card status-stale">
+          <div class="status-icon">🧹</div>
+          <div>
+            <div class="label">Offline &gt; 90 Days</div>
+            <div class="value" id="cardOffline90">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="meta-bar">
+      <div class="meta-left">
+        <div class="badge">Last updated: <strong id="lastUpdated">Never</strong></div>
+        <div class="badge">Next auto-refresh: <strong id="nextRefresh">--</strong></div>
+        <div class="badge">Auto-refresh: <strong id="autoRefreshState">Running</strong></div>
+      </div>
+
+      <div class="meta-right">
+        <label for="refreshInterval" class="muted">Refresh every</label>
+        <select id="refreshInterval">
+          <option value="15000">15 seconds</option>
+          <option value="30000">30 seconds</option>
+          <option value="60000" selected>60 seconds</option>
+          <option value="120000">2 minutes</option>
+          <option value="300000">5 minutes</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filters">
+      <input
+        id="search"
+        placeholder="Search by client name, DNS, IP, MAC, network, uplink"
+        style="min-width: 340px;"
+      >
+
+      <select id="statusFilter">
+        <option value="all">All Statuses</option>
+        <option value="online">Online</option>
+        <option value="offline">Offline</option>
+      </select>
+
+      <select id="reservationFilter">
+        <option value="all">All Reservation States</option>
+        <option value="reserved">Reserved</option>
+        <option value="dynamic">Dynamic</option>
+      </select>
+
+      <select id="connectionFilter">
+        <option value="all">All Connections</option>
+        <option value="wired">Wired</option>
+        <option value="wifi">Wi-Fi</option>
+        <option value="unknown">Unknown</option>
+      </select>
+
+      <select id="networkFilter">
+        <option value="all">All Networks</option>
+      </select>
+
+      <select id="cleanupFilter">
+        <option value="all">All Cleanup Views</option>
+        <option value="reserved_offline">Reserved but Offline</option>
+        <option value="offline_30">Offline > 30 Days</option>
+        <option value="offline_90">Offline > 90 Days</option>
+        <option value="offline_365">Offline > 365 Days</option>
+      </select>
+
+      <span id="summary" class="muted"></span>
+    </div>
+
+    <div class="table-wrap">
+      <table id="clientTable">
+        <thead>
+          <tr>
+            <th data-key="client_name" style="width:260px;">Client Name</th>
+            <th data-key="dns_name" style="width:180px;">DNS Name</th>
+            <th data-key="ip" style="width:130px;">IP</th>
+            <th data-key="reserved" style="width:110px;">Reserved</th>
+            <th data-key="mac" style="width:170px;">MAC</th>
+            <th data-key="network" style="width:210px;">Network</th>
+            <th data-key="connection_type" style="width:110px;">Type</th>
+            <th data-key="uplink" style="width:130px;">Uplink</th>
+            <th data-key="last_seen" style="width:120px;">Last Seen</th>
+            <th data-key="status" style="width:120px;">Status</th>
+          </tr>
+        </thead>
+
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    let clients = [];
+    let sortKey = 'client_name';
+    let sortDir = 'asc';
+    let selectedIndex = -1;
+    let selectedMac = null;
+
+    let refreshIntervalMs = 60000;
+    let autoRefreshTimer = null;
+    let countdownTimer = null;
+    let nextRefreshAt = null;
+    let searchPauseUntil = 0;
+    let isLoading = false;
+    let lastUpdatedAt = null;
+
+    const tbody = document.getElementById('tbody');
+    const search = document.getElementById('search');
+    const statusFilter = document.getElementById('statusFilter');
+    const reservationFilter = document.getElementById('reservationFilter');
+    const connectionFilter = document.getElementById('connectionFilter');
+    const networkFilter = document.getElementById('networkFilter');
+    const cleanupFilter = document.getElementById('cleanupFilter');
+    const summary = document.getElementById('summary');
+    const refreshIntervalSelect = document.getElementById('refreshInterval');
+
+    const cardTotal = document.getElementById('cardTotal');
+    const cardOnline = document.getElementById('cardOnline');
+    const cardOffline = document.getElementById('cardOffline');
+    const cardReservedOffline = document.getElementById('cardReservedOffline');
+    const cardOffline90 = document.getElementById('cardOffline90');
+
+    const lastUpdatedEl = document.getElementById('lastUpdated');
+    const nextRefreshEl = document.getElementById('nextRefresh');
+    const autoRefreshStateEl = document.getElementById('autoRefreshState');
+
+    const githubVersionLink = document.getElementById('githubVersionLink');
+    const donateLink = document.getElementById('donateLink');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+
+    function applyTheme(theme) {
+      const normalizedTheme = theme === 'light' ? 'light' : 'dark';
+
+      document.body.classList.toggle('theme-light', normalizedTheme === 'light');
+
+      if (themeToggleBtn) {
+        themeToggleBtn.textContent =
+          normalizedTheme === 'light' ? '🌙 Dark' : '☀ Light';
+      }
+
+      localStorage.setItem('unifiClientManagerTheme', normalizedTheme);
+    }
+
+    async function loadAppInfo() {
+      try {
+        const res = await fetch(`/api/app-info?t=${Date.now()}`, { cache: 'no-store' });
+
+        if (!res.ok) {
+          throw new Error(`App info failed: HTTP ${res.status}`);
+        }
+
+        const info = await res.json();
+
+        if (githubVersionLink) {
+          githubVersionLink.textContent = `GitHub v${info.version || '--'}`;
+          githubVersionLink.href =
+            info.githubUrl || 'https://github.com/ScottiBYTE/unifi-client-manager';
+        }
+
+        if (donateLink && info.donateUrl) {
+          donateLink.href = info.donateUrl;
+        }
+      } catch (err) {
+        console.warn('Unable to load app info:', err);
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function ipToNumber(ip) {
+      const parts = (ip || '0.0.0.0').split('.').map(Number);
+
+      if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) {
+        return 0;
+      }
+
+      return ((parts[0] << 24) >>> 0) +
+        (parts[1] << 16) +
+        (parts[2] << 8) +
+        parts[3];
+    }
+
+    function daysOffline(row) {
+      if (row.status === 'online') {
+        return 0;
+      }
+
+      const ts = Number(row.last_seen_ts || 0);
+
+      if (!ts) {
+        return Number.POSITIVE_INFINITY;
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+
+      return Math.floor((now - ts) / 86400);
+    }
+
+    function matchesCleanupView(row, view) {
+      const days = daysOffline(row);
+
+      switch (view) {
+        case 'reserved_offline':
+          return row.status === 'offline' && row.reserved;
+        case 'offline_30':
+          return row.status === 'offline' && days > 30;
+        case 'offline_90':
+          return row.status === 'offline' && days > 90;
+        case 'offline_365':
+          return row.status === 'offline' && days > 365;
+        default:
+          return true;
+      }
+    }
+
+    function getSortValue(row, key) {
+      switch (key) {
+        case 'client_name':
+          return row.client_name ? row.client_name.toLowerCase() : '~~~~';
+        case 'dns_name':
+          return row.dns_name ? row.dns_name.toLowerCase() : '~~~~';
+        case 'ip':
+          return ipToNumber(row.ip);
+        case 'reserved':
+          return row.reserved ? 0 : 1;
+        case 'mac':
+          return (row.mac || '').toLowerCase();
+        case 'network':
+          return (row.network || '').toLowerCase();
+        case 'connection_type':
+          return (row.connection_type || '').toLowerCase();
+        case 'uplink':
+          return (row.uplink || '').toLowerCase();
+        case 'last_seen':
+          return row.status === 'online'
+            ? Number.MAX_SAFE_INTEGER
+            : row.last_seen_ts || 0;
+        case 'status':
+          return row.status === 'online' ? 0 : 1;
+        default:
+          return String(row[key] || '').toLowerCase();
+      }
+    }
+
+    function filteredRows() {
+      const q = search.value.trim().toLowerCase();
+
+      const rows = clients.filter(c => {
+        const matchesSearch =
+          !q ||
+          (c.client_name || '').toLowerCase().includes(q) ||
+          (c.dns_name || '').toLowerCase().includes(q) ||
+          (c.ip || '').toLowerCase().includes(q) ||
+          (c.mac || '').toLowerCase().includes(q) ||
+          (c.network || '').toLowerCase().includes(q) ||
+          (c.uplink || '').toLowerCase().includes(q);
+
+        const matchesStatus =
+          statusFilter.value === 'all' ||
+          c.status === statusFilter.value;
+
+        const matchesReservation =
+          reservationFilter.value === 'all' ||
+          (reservationFilter.value === 'reserved' && c.reserved) ||
+          (reservationFilter.value === 'dynamic' && !c.reserved);
+
+        const matchesConnection =
+          connectionFilter.value === 'all' ||
+          c.connection_type === connectionFilter.value;
+
+        const matchesNetwork =
+          networkFilter.value === 'all' ||
+          c.network === networkFilter.value;
+
+        const matchesCleanup =
+          cleanupFilter.value === 'all' ||
+          matchesCleanupView(c, cleanupFilter.value);
+
+        return matchesSearch &&
+          matchesStatus &&
+          matchesReservation &&
+          matchesConnection &&
+          matchesNetwork &&
+          matchesCleanup;
+      });
+
+      rows.sort((a, b) => {
+        const av = getSortValue(a, sortKey);
+        const bv = getSortValue(b, sortKey);
+
+        if (av < bv) {
+          return sortDir === 'asc' ? -1 : 1;
+        }
+
+        if (av > bv) {
+          return sortDir === 'asc' ? 1 : -1;
+        }
+
+        return 0;
+      });
+
+      return rows;
+    }
+
+    function clampSelectedIndex(rows) {
+      if (!rows.length) {
+        selectedIndex = -1;
+        selectedMac = null;
+        return;
+      }
+
+      if (selectedMac) {
+        const foundIndex = rows.findIndex(row =>
+          String(row.mac || '').toLowerCase() === String(selectedMac).toLowerCase()
+        );
+
+        if (foundIndex >= 0) {
+          selectedIndex = foundIndex;
+          return;
+        }
+      }
+
+      selectedIndex = 0;
+      selectedMac = String(rows[0]?.mac || '').toLowerCase() || null;
+    }
+
+    function updateSummaryCards() {
+      const total = clients.length;
+      const online = clients.filter(c => c.status === 'online').length;
+      const offline = clients.filter(c => c.status === 'offline').length;
+      const reservedOffline = clients.filter(c => c.status === 'offline' && c.reserved).length;
+      const offline90 = clients.filter(c => c.status === 'offline' && daysOffline(c) > 90).length;
+
+      cardTotal.textContent = total;
+      cardOnline.textContent = online;
+      cardOffline.textContent = offline;
+      cardReservedOffline.textContent = reservedOffline;
+      cardOffline90.textContent = offline90;
+    }
+
+    function render() {
+      const rows = filteredRows();
+
+      clampSelectedIndex(rows);
+
+      tbody.innerHTML = rows.map((c, i) => {
+        const staleDays = daysOffline(c);
+        const showOfflineAge =
+          c.status === 'offline' &&
+          Number.isFinite(staleDays) &&
+          staleDays > 30;
+
+        const clientName = c.client_name || '';
+        const dnsName = c.dns_name || '';
+        const ip = c.ip || '';
+        const mac = c.mac || '';
+
+        return `
+          <tr
+            class="${i === selectedIndex ? 'selected' : ''}"
+            data-index="${i}"
+            data-mac="${escapeHtml(String(mac).toLowerCase())}"
+          >
+            <td
+              class="copyable"
+              data-copy="${escapeHtml(clientName)}"
+              data-label="Client Name"
+              title="${escapeHtml(clientName)}"
+            >
+              ${clientName ? escapeHtml(clientName) : '<span class="pill pill-red">Unnamed Client</span>'}
+            </td>
+
+            <td
+              class="copyable"
+              data-copy="${escapeHtml(dnsName)}"
+              data-label="DNS Name"
+              title="${escapeHtml(dnsName)}"
+            >
+              ${dnsName ? escapeHtml(dnsName) : '<span class="pill pill-amber">No DNS</span>'}
+            </td>
+
+            <td
+              class="copyable mono"
+              data-copy="${escapeHtml(ip)}"
+              data-label="IP"
+              title="${escapeHtml(ip)}"
+            >
+              ${escapeHtml(ip)}
+            </td>
+
+            <td>
+              ${c.reserved ? '✅' : '❌'}
+              ${c.status === 'offline' && c.reserved ? ' <span class="pill pill-red">Stale</span>' : ''}
+            </td>
+
+            <td
+              class="copyable mono"
+              data-copy="${escapeHtml(mac)}"
+              data-label="MAC"
+              title="${escapeHtml(mac)}"
+            >
+              ${escapeHtml(mac)}
+            </td>
+
+            <td title="${escapeHtml(c.network || '')}">
+              ${escapeHtml(c.network || '')}
+            </td>
+
+            <td>
+              ${c.connection_type === 'wifi'
+                ? '📶 Wi-Fi'
+                : c.connection_type === 'wired'
+                  ? '🔌 Wired'
+                  : '❔ Unknown'}
+            </td>
+
+            <td title="${escapeHtml(c.uplink || '')}">
+              ${escapeHtml(c.uplink || '')}
+            </td>
+
+            <td>
+              ${escapeHtml(c.last_seen || '')}
+              ${showOfflineAge ? ` <span class="pill pill-blue">${staleDays}d</span>` : ''}
+            </td>
+
+            <td class="status-${escapeHtml(c.status || 'offline')}">
+              ${c.status === 'online' ? '🟢 Online' : '⚫ Offline'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      summary.textContent =
+        `Showing ${rows.length} client${rows.length === 1 ? '' : 's'}`;
+    }
+
+    function showToast(message) {
+      const oldToast = document.querySelector('.toast');
+
+      if (oldToast) {
+        oldToast.remove();
+      }
+
+      const toast = document.createElement('div');
+
+      toast.className = 'toast';
+      toast.textContent = message;
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 2200);
+    }
+
+    async function copyToClipboard(value, label = 'Value') {
+      const text = String(value || '').trim();
+
+      if (!text) {
+        showToast(`No ${label} to copy`);
+        return;
+      }
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          showToast(`${label} copied: ${text}`);
+          return;
+        }
+
+        const textarea = document.createElement('textarea');
+
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+
+        document.body.appendChild(textarea);
+
+        textarea.focus();
+        textarea.select();
+
+        const success = document.execCommand('copy');
+
+        document.body.removeChild(textarea);
+
+        if (!success) {
+          throw new Error('execCommand copy failed');
+        }
+
+        showToast(`${label} copied: ${text}`);
+      } catch (err) {
+        console.error('Clipboard copy failed:', err);
+
+        window.prompt(`Copy ${label}:`, text);
+
+        showToast('Browser blocked clipboard access');
+      }
+    }
+
+    function formatDateTime(date) {
+      if (!date) {
+        return 'Never';
+      }
+
+      return date.toLocaleString();
+    }
+
+    function formatCountdown(ms) {
+      if (ms <= 0) {
+        return 'due now';
+      }
+
+      const totalSeconds = Math.ceil(ms / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+
+      if (minutes > 0) {
+        return `${minutes}m ${seconds}s`;
+      }
+
+      return `${seconds}s`;
+    }
+
+    function isSearchPauseActive() {
+      return Date.now() < searchPauseUntil;
+    }
+
+    function updateRefreshStatus() {
+      lastUpdatedEl.textContent = formatDateTime(lastUpdatedAt);
+
+      if (isSearchPauseActive()) {
+        autoRefreshStateEl.textContent = 'Paused while typing';
+        nextRefreshEl.textContent = `${formatCountdown(searchPauseUntil - Date.now())} pause`;
+        return;
+      }
+
+      autoRefreshStateEl.textContent = isLoading ? 'Refreshing now' : 'Running';
+
+      if (!nextRefreshAt) {
+        nextRefreshEl.textContent = '--';
+        return;
+      }
+
+      nextRefreshEl.textContent = formatCountdown(nextRefreshAt - Date.now());
+    }
+
+    function scheduleAutoRefresh() {
+      if (autoRefreshTimer) {
+        clearTimeout(autoRefreshTimer);
+      }
+
+      nextRefreshAt = Date.now() + refreshIntervalMs;
+
+      autoRefreshTimer = setTimeout(async () => {
+        if (isSearchPauseActive()) {
+          scheduleAutoRefresh();
+          updateRefreshStatus();
+          return;
+        }
+
+        await loadClients();
+        scheduleAutoRefresh();
+        updateRefreshStatus();
+      }, refreshIntervalMs);
+
+      updateRefreshStatus();
+    }
+
+    function startCountdownTimer() {
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+      }
+
+      countdownTimer = setInterval(updateRefreshStatus, 1000);
+    }
+
+    async function loadClients() {
+      if (isLoading) {
+        return;
+      }
+
+      isLoading = true;
+
+      updateRefreshStatus();
+
+      try {
+        const res = await fetch('/api/clients');
+
+        if (!res.ok) {
+          throw new Error(`API failed: HTTP ${res.status}`);
+        }
+
+        clients = await res.json();
+
+        const currentNetwork = networkFilter.value;
+        const networks = [
+          ...new Set(clients.map(c => c.network).filter(Boolean))
+        ].sort();
+
+        networkFilter.innerHTML =
+          '<option value="all">All Networks</option>' +
+          networks
+            .map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`)
+            .join('');
+
+        if ([...networkFilter.options].some(o => o.value === currentNetwork)) {
+          networkFilter.value = currentNetwork;
+        }
+
+        lastUpdatedAt = new Date();
+
+        updateSummaryCards();
+        render();
+      } catch (err) {
+        console.warn('Client refresh failed; keeping existing client table.', err);
+        showToast('Client refresh failed');
+      } finally {
+        isLoading = false;
+        updateRefreshStatus();
+      }
+    }
+
+    function scrollToSelected() {
+      const row = document.querySelector('tbody tr.selected');
+
+      if (row) {
+        row.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    tbody.addEventListener('click', async e => {
+      const tr = e.target.closest('tr');
+
+      if (!tr) {
+        return;
+      }
+
+      selectedMac = String(tr.dataset.mac || '').toLowerCase();
+
+      const rows = filteredRows();
+
+      selectedIndex = rows.findIndex(row =>
+        String(row.mac || '').toLowerCase() === selectedMac
+      );
+
+      if (selectedIndex < 0) {
+        selectedIndex = 0;
+      }
+
+      const copyTarget = e.target.closest('.copyable');
+
+      render();
+
+      if (copyTarget) {
+        await copyToClipboard(
+          copyTarget.dataset.copy,
+          copyTarget.dataset.label || 'Value'
+        );
+      }
+    });
+
+    document.querySelectorAll('th[data-key]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.key;
+
+        if (sortKey === key) {
+          sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortKey = key;
+          sortDir = 'asc';
+        }
+
+        render();
+      });
+    });
+
+    [
+      statusFilter,
+      reservationFilter,
+      connectionFilter,
+      networkFilter,
+      cleanupFilter
+    ].forEach(el => {
+      el.addEventListener('input', () => {
+        selectedIndex = 0;
+        selectedMac = null;
+        render();
+      });
+    });
+
+    search.addEventListener('input', () => {
+      selectedIndex = 0;
+      selectedMac = null;
+      searchPauseUntil = Date.now() + 10000;
+      updateRefreshStatus();
+      render();
+    });
+
+    refreshIntervalSelect.addEventListener('change', () => {
+      refreshIntervalMs = Number(refreshIntervalSelect.value || 60000);
+      scheduleAutoRefresh();
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', async () => {
+      await loadClients();
+      scheduleAutoRefresh();
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      window.location.href = '/api/export/reservations.csv';
+    });
+
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        const currentTheme = document.body.classList.contains('theme-light')
+          ? 'light'
+          : 'dark';
+
+        applyTheme(currentTheme === 'light' ? 'dark' : 'light');
+      });
+    }
+
+    document.addEventListener('keydown', async e => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+
+      if (tag === 'input' || tag === 'select' || tag === 'textarea') {
+        return;
+      }
+
+      const rows = filteredRows();
+
+      if (!rows.length) {
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+
+        selectedIndex = Math.min(selectedIndex + 1, rows.length - 1);
+        selectedMac = String(rows[selectedIndex]?.mac || '').toLowerCase() || null;
+
+        render();
+        scrollToSelected();
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        selectedMac = String(rows[selectedIndex]?.mac || '').toLowerCase() || null;
+
+        render();
+        scrollToSelected();
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+
+        const row = rows[selectedIndex];
+
+        if (row?.mac) {
+          await copyToClipboard(row.mac, 'MAC');
+        }
+      }
+    });
+
+    applyTheme(localStorage.getItem('unifiClientManagerTheme') || 'dark');
+    loadAppInfo();
+
+    loadClients().then(() => {
+      scheduleAutoRefresh();
+      startCountdownTimer();
+    });
+  </script>
+</body>
+</html>
+
